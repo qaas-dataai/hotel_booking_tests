@@ -1,0 +1,50 @@
+### This file needs to go into dev code base, im running into fork issues and unable to push to sullyqa repo"
+
+name: Run All API Tests on Release Branch
+
+on:
+  push:
+    branches:
+      - release
+  pull_request:
+    branches:
+      - release
+
+jobs:
+  run-api-tests:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Dev Code
+        uses: actions/checkout@v4
+
+      - name: Checkout Test Code
+        uses: actions/checkout@v4
+        with:
+          repository: qaas-dataai/hotel_booking_tests
+          path: hotel_booking_tests
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install Dependencies
+        run: |
+          cd hotel_booking_tests
+          python -m venv venv
+          source venv/bin/activate
+          pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run All API Tests
+        run: |
+          cd hotel_booking_tests
+          source venv/bin/activate
+          pytest tests/ --maxfail=5 --disable-warnings --html=report.html --self-contained-html
+
+      - name: Upload HTML Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: api-test-report
+          path: hotel_booking_tests/report.html
